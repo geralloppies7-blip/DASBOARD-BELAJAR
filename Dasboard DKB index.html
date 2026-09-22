@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard DKB - Dukcapil Kabupaten Asmat 2026</title>
+<link rel="icon" type="image/png" href="logo-asmat.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f0f2f5; color: #333; line-height: 1.5;
+  }
+
+  /* ========== KOP SURAT ========== */
+  .kop {
+    background: white; border-bottom: 4px double #1F4E78;
+    padding: 20px 40px; display: flex; align-items: center; gap: 20px;
+  }
+  .kop .logo-img {
+    width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;
+  }
+  .kop .teks { flex: 1; text-align: center; }
+  .kop .teks h1 {
+    font-size: 16px; color: #1F4E78;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .kop .teks h2 {
+    font-size: 20px; color: #1F4E78;
+    text-transform: uppercase; font-weight: bold; margin: 3px 0;
+  }
+  .kop .teks p { font-size: 11px; color: #666; font-style: italic; }
+
+  /* ========== HEADER LAPORAN ========== */
+  .header-laporan {
+    background: linear-gradient(135deg, #1F4E78, #2E75B6);
+    color: white; padding: 30px 40px; text-align: center;
+  }
+  .header-laporan h1 { font-size: 20px; margin-bottom: 8px; }
+  .header-laporan .info {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 10px; margin-top: 12px;
+  }
+  .header-laporan .badge {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 15px; border-radius: 20px; font-size: 12px;
+  }
+  .header-laporan .badge.kode {
+    background: #FFD966; color: #1F4E78; font-weight: bold;
+  }
+
+  /* ========== CONTAINER ========== */
+  .container { max-width: 1400px; margin: 0 auto; padding: 25px 20px; }
+
+  /* ========== SECTION ========== */
+  .section {
+    background: white; border-radius: 10px; padding: 22px 25px;
+    margin-bottom: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .section h3 {
+    color: #1F4E78; font-size: 15px; padding-bottom: 10px;
+    margin-bottom: 18px; border-bottom: 3px solid #1F4E78;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ========== STAT CARDS ========== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    padding: 15px; border-radius: 8px; background: #f8f9fa;
+    border-left: 5px solid #1F4E78; transition: transform 0.15s;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card.blue { border-left-color: #2E75B6; background: #E7F0F9; }
+  .card.pink { border-left-color: #E91E63; background: #FCE4EC; }
+  .card.green { border-left-color: #4CAF50; background: #E8F5E9; }
+  .card.orange { border-left-color: #FF9800; background: #FFF3E0; }
+  .card.purple { border-left-color: #9C27B0; background: #F3E5F5; }
+  .card.red { border-left-color: #E53935; background: #FFEBEE; }
+  .card.teal { border-left-color: #009688; background: #E0F2F1; }
+  .card.gray { border-left-color: #9E9E9E; background: #F5F5F5; }
+  .card-label {
+    font-size: 10px; color: #666; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600;
+  }
+  .card-value {
+    font-size: 24px; font-weight: bold; color: #1F4E78;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .card-value.zero { color: #BDBDBD; }
+  .card-sub { font-size: 10px; color: #888; }
+
+  /* ========== GRID ========== */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+  .chart-wrapper {
+    background: #fafbfc; padding: 15px; border-radius: 8px;
+    border: 1px solid #eee;
+  }
+  canvas { max-height: 350px; }
+
+  /* ========== TABEL ========== */
+  table {
+    width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;
+  }
+  thead { background: #1F4E78; color: white; }
+  th, td { padding: 10px 12px; text-align: left; border: 1px solid #ddd; }
+  th { font-weight: 600; text-align: center; font-size: 11px; }
+  tbody tr:nth-child(even) { background: #f8f9fa; }
+  tbody tr:hover { background: #E7F0F9; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.center { text-align: center; }
+  td.zero { color: #BDBDBD; }
+  tfoot { background: #FFD966; font-weight: bold; }
+  tfoot td { border: 1px solid #999; }
+
+  /* ========== BADGE ========== */
+  .badge-status {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 12px; font-size: 10px; font-weight: bold;
+  }
+  .badge-high { background: #4CAF50; color: white; }
+  .badge-medium { background: #FF9800; color: white; }
+  .badge-zero { background: #E0E0E0; color: #666; }
+  .badge-danger { background: #E53935; color: white; }
+
+  /* ========== INFO BOX ========== */
+  .info-box {
+    background: #E7F0F9; border-left: 5px solid #2E75B6;
+    padding: 12px 18px; border-radius: 6px; margin: 15px 0; font-size: 12px;
+  }
+  .info-box strong { color: #1F4E78; }
+  .info-box.warning {
+    background: #FFF3E0; border-left-color: #FF9800;
+  }
+  .info-box.warning strong { color: #E65100; }
+
+  /* ========== TTD ========== */
+  .ttd {
+    display: flex; justify-content: space-between;
+    margin-top: 30px; padding-top: 15px;
+  }
+  .ttd-box { text-align: center; width: 45%; }
+  .ttd-box p { font-size: 12px; margin-bottom: 60px; }
+  .ttd-box .nama {
+    font-weight: bold; border-top: 1px solid #333;
+    padding-top: 5px; display: inline-block; min-width: 180px;
+  }
+
+  /* ========== FOOTER ========== */
+  .footer {
+    background: #1F4E78; color: white;
+    padding: 18px; text-align: center; font-size: 11px;
+  }
+
+  @media print {
+    body { background: white; }
+    .section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- KOP SURAT -->
+<div class="kop">
+  <img src="logo-asmat.png" alt="Logo Kabupaten Asmat" class="logo-img">
+  <div class="teks">
+    <h1>Pemerintah Kabupaten Asmat</h1>
+    <h2>Dinas Kependudukan dan Pencatatan Sipil</h2>
+    <p>Jalan Yos Sudarso, Agats, Kabupaten Asmat, Papua Selatan</p>
+  </div>
+</div>
+
+<!-- HEADER LAPORAN -->
+<div class="header-laporan">
+  <h1>DASHBOARD DATA KEPENDUDUKAN BERSIH (DKB)</h1>
+  <p style="font-size: 12px; opacity: 0.9;">Dinas Kependudukan dan Pencatatan Sipil Kabupaten Asmat</p>
+  <div class="info">
+    <span class="badge">📅 Semester I Tahun 2026</span>
+    <span class="badge">🗓️ Periode: 30 Juni 2026</span>
+    <span class="badge kode">🔖 Kode: 9304</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SECTION I: RINGKASAN PENDUDUK -->
+  <div class="section">
+    <h3>📊 I. Ringkasan Agregat Penduduk</h3>
+    <div class="cards">
+      <div class="card blue">
+        <div class="card-label">Total Penduduk</div>
+        <div class="card-value" id="totalJiwa">-</div>
+        <div class="card-sub">jiwa</div>
+      </div>
+      <div class="card blue">
+        <div class="card-label">Laki-laki</div>
+        <div class="card-value" id="totalL">-</div>
+        <div class="card-sub" id="pctL">-</div>
+      </div>
+      <div class="card pink">
+        <div class="card-label">Perempuan</div>
+        <div class="card-value" id="totalP">-</div>
+        <div class="card-sub" id="pctP">-</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">Kepala Keluarga</div>
+        <div class="card-value" id="totalKK">-</div>
+        <div class="card-sub">KK</div>
+      </div>
+      <div class="card orange">
+        <div class="card-label">Jumlah Distrik</div>
+        <div class="card-value" id="totalDistrik">-</div>
+        <div class="card-sub">distrik</div>
+      </div>
+      <div class="card purple">
+        <div class="card-label">Kepadatan</div>
+        <div class="card-value" id="kepadatan">-</div>
+        <div class="card-sub">jiwa/km²</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION II: DATA KTP-EL -->
+  <div class="section">
+    <h3>🪪 II. Data Pelayanan KTP-el (Target: 99,4%)</h3>
+    <div class="cards">
+      <div class="card teal">
+        <div class="card-label">Wajib KTP-el</div>
+        <div class="card-value" id="totalWajib">-</div>
+        <div class="card-sub">usia 17+ / menikah</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">Sudah Rekam</div>
+        <div class="card-value" id="totalRekam">-</div>
+        <div class="card-sub" id="pctRekam">-</div>
+      </div>
+      <div class="card red">
+        <div class="card-label">Belum Rekam</div>
+        <div class="card-value" id="totalBelum">-</div>
+        <div class="card-sub" id="pctBelum">-</div>
+      </div>
+      <div class="card blue">
+        <div class="card-label">Cakupan</div>
+        <div class="card-value" id="persenNasional">-</div>
+        <div class="card-sub" id="statusNasional">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION III: GRAFIK PENDUDUK -->
+  <div class="section">
+    <h3>📈 III. Visualisasi Data Penduduk</h3>
+    <div class="grid-2">
+      <div class="chart-wrapper">
+        <canvas id="chartBar"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="chartPie"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION IV: GRAFIK KTP-EL -->
+  <div class="section">
+    <h3>🪪 IV. Visualisasi Cakupan KTP-el per Distrik</h3>
+    <div class="chart-wrapper">
+      <canvas id="chartKTP"></canvas>
+    </div>
+  </div>
+
+  <!-- SECTION V: TABEL GABUNGAN -->
+  <div class="section">
+    <h3>📋 V. Tabel Rekapitulasi per Distrik</h3>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Distrik</th>
+            <th>L</th>
+            <th>P</th>
+            <th>Total Jiwa</th>
+            <th>% Penduduk</th>
+            <th>KK</th>
+            <th>Wajib KTP</th>
+            <th>Sudah Rekam</th>
+            <th>Belum Rekam</th>
+            <th>% Cakupan</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION VI: KOMPOSISI USIA -->
+  <div class="section">
+    <h3>👥 VI. Komposisi Penduduk Menurut Kelompok Usia</h3>
+    <div class="grid-2">
+      <div class="chart-wrapper">
+        <canvas id="chartUsia"></canvas>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Kelompok Usia</th>
+              <th>Jumlah</th>
+              <th>Persentase</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUsia"></tbody>
+          <tfoot id="tfootUsia"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION VII: KESIMPULAN -->
+  <div class="section">
+    <h3>✍️ VII. Kesimpulan & Rekomendasi</h3>
+    <div class="info-box">
+      <strong>A. Kesimpulan</strong>
+      <ol style="padding-left: 20px; margin-top: 10px;">
+        <li>Total penduduk Kabupaten Asmat berdasarkan DKB Semester I 2026 mencapai <strong id="k1">-</strong> jiwa.</li>
+        <li>Komposisi: <strong id="k3">-</strong> laki-laki (<span id="k4">-</span>) dan <strong id="k5">-</strong> perempuan (<span id="k6">-</span>).</li>
+        <li>Jumlah KK tercatat <strong id="k7">-</strong> KK dengan rata-rata <strong id="k8">-</strong> jiwa/KK.</li>
+        <li>Cakupan KTP-el mencapai <strong id="k9">-</strong> dari <strong id="k10">-</strong> wajib KTP.</li>
+      </ol>
+    </div>
+    <div class="info-box warning">
+      <strong>B. Rekomendasi</strong>
+      <ol style="padding-left: 20px; margin-top: 10px;">
+        <li>Jemput bola perekaman KTP-el ke distrik dengan cakupan di bawah 99,4%.</li>
+        <li>Sosialisasi KTP-el ke sekolah untuk kelompok usia 17 tahun.</li>
+        <li>Pemutakhiran data kependudukan oleh petugas registrasi distrik.</li>
+        <li>Integrasi data dengan Dinas Kesehatan untuk kelahiran & kematian.</li>
+      </ol>
+    </div>
+
+    <div class="ttd">
+      <div class="ttd-box">
+        <p>Mengetahui,<br>Kepala Dinas Dukcapil Asmat</p>
+        <div class="nama">(..............................)</div>
+      </div>
+      <div class="ttd-box">
+        <p>Agats, 30 Juni 2026<br>Petugas Laporan DKB</p>
+        <div class="nama">(..............................)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>© 2026 Dinas Kependudukan dan Pencatatan Sipil Kabupaten Asmat</p>
+  <p>Sumber: DKB Semester I 2026 | SIAK Kemendagri | Data KTP-el</p>
+</div>
+
+<script>
+// ============================================================
+// KONFIGURASI
+// ============================================================
+const TARGET_NASIONAL = 99.4;
+const LUAS_WILAYAH = 31983.44;
+
+// ============================================================
+// DATA PER DISTRIK
+// Ganti angka dengan data riil dari Dinas Dukcapil Asmat
+// ============================================================
+const data = [
+  { no:1,  nama:"Agats",         L:8500, P:8100, kk:3800, wajibKTP:12000, sudahRekam:11960 },
+  { no:2,  nama:"Akat",          L:3200, P:3000, kk:1400, wajibKTP:4500,  sudahRekam:4490 },
+  { no:3,  nama:"Aswi",          L:2100, P:2000, kk:950,  wajibKTP:3000,  sudahRekam:2970 },
+  { no:4,  nama:"Atsy",          L:2800, P:2650, kk:1250, wajibKTP:3950,  sudahRekam:3940 },
+  { no:5,  nama:"Ayip",          L:1500, P:1400, kk:680,  wajibKTP:2100,  sudahRekam:2040 },
+  { no:6,  nama:"Betcbamu",      L:1800, P:1700, kk:800,  wajibKTP:2550,  sudahRekam:2540 },
+  { no:7,  nama:"Der Koumur",    L:2200, P:2100, kk:1000, wajibKTP:3100,  sudahRekam:3090 },
+  { no:8,  nama:"Fayit",         L:2600, P:2500, kk:1150, wajibKTP:3700,  sudahRekam:3680 },
+  { no:9,  nama:"Jagu",          L:1900, P:1800, kk:850,  wajibKTP:2700,  sudahRekam:2680 },
+  { no:10, nama:"Joutu",         L:1400, P:1350, kk:630,  wajibKTP:2000,  sudahRekam:1970 },
+  { no:11, nama:"Joerat",        L:2300, P:2200, kk:1050, wajibKTP:3250,  sudahRekam:3230 },
+  { no:12, nama:"Kolf Braza",    L:1700, P:1600, kk:770,  wajibKTP:2400,  sudahRekam:2380 },
+  { no:13, nama:"Kopay",         L:2000, P:1900, kk:900,  wajibKTP:2850,  sudahRekam:2840 },
+  { no:14, nama:"Pantai Kasuari",L:2500, P:2400, kk:1100, wajibKTP:3550,  sudahRekam:3540 },
+  { no:15, nama:"Pulau Tiga",    L:1300, P:1250, kk:590,  wajibKTP:1850,  sudahRekam:1830 },
+  { no:16, nama:"Safan",         L:1600, P:1550, kk:720,  wajibKTP:2250,  sudahRekam:2240 },
+  { no:17, nama:"Sawa Erma",     L:2400, P:2300, kk:1080, wajibKTP:3400,  sudahRekam:3390 },
+  { no:18, nama:"Sirets",        L:1200, P:1150, kk:550,  wajibKTP:1700,  sudahRekam:1680 },
+  { no:19, nama:"Suator",        L:2700, P:2600, kk:1200, wajibKTP:3850,  sudahRekam:3840 },
+  { no:20, nama:"Suru-suru",     L:1100, P:1050, kk:500,  wajibKTP:1550,  sudahRekam:1520 },
+  { no:21, nama:"Unir Sirau",    L:2100, P:2050, kk:950,  wajibKTP:3000,  sudahRekam:2990 },
+  { no:22, nama:"Jetsy",         L:1400, P:1300, kk:620,  wajibKTP:1950,  sudahRekam:1930 },
+  { no:23, nama:"Sor Ep",        L:1800, P:1750, kk:810,  wajibKTP:2550,  sudahRekam:2530 }
+];
+
+// ============================================================
+// DATA KOMPOSISI USIA
+// ============================================================
+const dataUsia = [
+  { kelompok:"0 - 4 tahun",   jumlah:8340 },
+  { kelompok:"5 - 9 tahun",   jumlah:21270 },
+  { kelompok:"10 - 14 tahun", jumlah:17220 },
+  { kelompok:"15 - 19 tahun", jumlah:12770 },
+  { kelompok:"20 - 24 tahun", jumlah:9340 },
+  { kelompok:"25 - 29 tahun", jumlah:8620 },
+  { kelompok:"30 - 34 tahun", jumlah:7490 },
+  { kelompok:"35 - 39 tahun", jumlah:7850 },
+  { kelompok:"40 - 44 tahun", jumlah:6650 },
+  { kelompok:"45 - 49 tahun", jumlah:6050 },
+  { kelompok:"50 - 54 tahun", jumlah:3880 },
+  { kelompok:"55 - 59 tahun", jumlah:3430 },
+  { kelompok:"60 - 64 tahun", jumlah:1950 },
+  { kelompok:"65 - 69 tahun", jumlah:1150 },
+  { kelompok:"70 - 74 tahun", jumlah:600 },
+  { kelompok:"75+ tahun",     jumlah:370 }
+];
+
+// ============================================================
+// FORMAT ANGKA
+// ============================================================
+const fmt = n => new Intl.NumberFormat('id-ID').format(Math.round(n));
+
+// ============================================================
+// HITUNG TOTAL
+// ============================================================
+function hitungTotal() {
+  let tL=0, tP=0, tKK=0, tWajib=0, tRekam=0;
+  data.forEach(d => {
+    d.total = d.L + d.P;
+    d.belumRekam = d.wajibKTP - d.sudahRekam;
+    d.persenKTP = d.wajibKTP > 0 ? (d.sudahRekam / d.wajibKTP * 100) : 0;
+    tL += d.L; tP += d.P; tKK += d.kk;
+    tWajib += d.wajibKTP; tRekam += d.sudahRekam;
+  });
+  const totalJiwa = tL + tP;
+  data.forEach(d => { d.persen = totalJiwa > 0 ? (d.total / totalJiwa * 100) : 0; });
+  return { tL, tP, totalJiwa, tKK, tWajib, tRekam, tBelum: tWajib - tRekam };
+}
+
+// ============================================================
+// RENDER KARTU
+// ============================================================
+function renderCards() {
+  const t = hitungTotal();
+  document.getElementById('totalJiwa').textContent = fmt(t.totalJiwa);
+  document.getElementById('totalL').textContent = fmt(t.tL);
+  document.getElementById('totalP').textContent = fmt(t.tP);
+  document.getElementById('totalKK').textContent = fmt(t.tKK);
+  document.getElementById('totalDistrik').textContent = data.length;
+
+  const pctL = t.totalJiwa > 0 ? (t.tL / t.totalJiwa * 100) : 0;
+  const pctP = t.totalJiwa > 0 ? (t.tP / t.totalJiwa * 100) : 0;
+  document.getElementById('pctL').textContent = pctL.toFixed(2) + '% dari total';
+  document.getElementById('pctP').textContent = pctP.toFixed(2) + '% dari total';
+  document.getElementById('kepadatan').textContent = (t.totalJiwa / LUAS_WILAYAH).toFixed(2);
+
+  const persen = t.tWajib > 0 ? (t.tRekam / t.tWajib * 100) : 0;
+  document.getElementById('totalWajib').textContent = fmt(t.tWajib);
+  document.getElementById('totalRekam').textContent = fmt(t.tRekam);
+  document.getElementById('totalBelum').textContent = fmt(t.tBelum);
+  document.getElementById('pctRekam').textContent = persen.toFixed(2) + '% dari wajib';
+  document.getElementById('pctBelum').textContent = (100 - persen).toFixed(2) + '% dari wajib';
+  document.getElementById('persenNasional').textContent = persen.toFixed(2) + '%';
+
+  const statusEl = document.getElementById('statusNasional');
+  if (persen >= TARGET_NASIONAL) {
+    statusEl.textContent = '✅ Capai Target';
+    statusEl.style.color = '#2E7D32';
+  } else {
+    statusEl.textContent = '⚠️ Di Bawah Target';
+    statusEl.style.color = '#E65100';
+  }
+}
+
+// ============================================================
+// RENDER TABEL DISTRIK
+// ============================================================
+function renderTabel() {
+  const t = hitungTotal();
+  let html = '';
+  data.forEach(d => {
+    const statusClass = d.persenKTP >= TARGET_NASIONAL ? 'badge-high' : 'badge-medium';
+    const statusText = d.persenKTP >= TARGET_NASIONAL ? '✓ Tercapai' : '! Perhatian';
+    html += `<tr>
+      <td class="center">${d.no}</td>
+      <td><b>${d.nama}</b></td>
+      <td class="num">${fmt(d.L)}</td>
+      <td class="num">${fmt(d.P)}</td>
+      <td class="num"><b>${fmt(d.total)}</b></td>
+      <td class="num">${d.persen.toFixed(2)}%</td>
+      <td class="num">${fmt(d.kk)}</td>
+      <td class="num">${fmt(d.wajibKTP)}</td>
+      <td class="num" style="color:#2E7D32;">${fmt(d.sudahRekam)}</td>
+      <td class="num" style="color:#E53935;">${fmt(d.belumRekam)}</td>
+      <td class="num"><b>${d.persenKTP.toFixed(2)}%</b></td>
+      <td class="center"><span class="badge-status ${statusClass}">${statusText}</span></td>
+    </tr>`;
+  });
+  document.getElementById('tbody').innerHTML = html;
+
+  const persenTotal = t.tWajib > 0 ? (t.tRekam / t.tWajib * 100) : 0;
+  document.getElementById('tfoot').innerHTML = `<tr>
+    <td colspan="2" class="center">TOTAL</td>
+    <td class="num">${fmt(t.tL)}</td>
+    <td class="num">${fmt(t.tP)}</td>
+    <td class="num">${fmt(t.totalJiwa)}</td>
+    <td class="num">100,00%</td>
+    <td class="num">${fmt(t.tKK)}</td>
+    <td class="num">${fmt(t.tWajib)}</td>
+    <td class="num">${fmt(t.tRekam)}</td>
+    <td class="num">${fmt(t.tBelum)}</td>
+    <td class="num">${persenTotal.toFixed(2)}%</td>
+    <td class="center">-</td>
+  </tr>`;
+}
+
+// ============================================================
+// RENDER TABEL USIA
+// ============================================================
+function renderTabelUsia() {
+  const totalUsia = dataUsia.reduce((a, b) => a + b.jumlah, 0);
+  let html = '';
+  dataUsia.forEach(d => {
+    const persen = totalUsia > 0 ? (d.jumlah / totalUsia * 100) : 0;
+    html += `<tr>
+      <td>${d.kelompok}</td>
+      <td class="num">${fmt(d.jumlah)}</td>
+      <td class="num">${persen.toFixed(2)}%</td>
+    </tr>`;
+  });
+  document.getElementById('tbodyUsia').innerHTML = html;
+  document.getElementById('tfootUsia').innerHTML = `<tr>
+    <td>TOTAL</td>
+    <td class="num">${fmt(totalUsia)}</td>
+    <td class="num">100,00%</td>
+  </tr>`;
+}
+
+// ============================================================
+// RENDER KESIMPULAN
+// ============================================================
+function renderKesimpulan() {
+  const t = hitungTotal();
+  const pctL = t.totalJiwa > 0 ? (t.tL/t.totalJiwa*100).toFixed(2) : 0;
+  const pctP = t.totalJiwa > 0 ? (t.tP/t.totalJiwa*100).toFixed(2) : 0;
+  const rataKK = t.tKK > 0 ? (t.totalJiwa/t.tKK).toFixed(2) : 0;
+  const persen = t.tWajib > 0 ? (t.tRekam/t.tWajib*100).toFixed(2) : 0;
+
+  document.getElementById('k1').textContent = fmt(t.totalJiwa);
+  document.getElementById('k3').textContent = fmt(t.tL);
+  document.getElementById('k4').textContent = pctL + '%';
+  document.getElementById('k5').textContent = fmt(t.tP);
+  document.getElementById('k6').textContent = pctP + '%';
+  document.getElementById('k7').textContent = fmt(t.tKK);
+  document.getElementById('k8').textContent = rataKK;
+  document.getElementById('k9').textContent = persen + '%';
+  document.getElementById('k10').textContent = fmt(t.tWajib);
+}
+
+// ============================================================
+// GRAFIK BATANG PENDUDUK
+// ============================================================
+function renderBar() {
+  new Chart(document.getElementById('chartBar'), {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.nama),
+      datasets: [{
+        label: 'Total Jiwa',
+        data: data.map(d => d.total),
+        backgroundColor: 'rgba(31, 78, 120, 0.7)',
+        borderColor: '#1F4E78', borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Jumlah Penduduk per Distrik', color: '#1F4E78', font: { size: 13 } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => fmt(v) } },
+        x: { ticks: { font: { size: 9 }, maxRotation: 60 } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// PIE CHART JENIS KELAMIN
+// ============================================================
+function renderPie() {
+  const t = hitungTotal();
+  new Chart(document.getElementById('chartPie'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Laki-laki', 'Perempuan'],
+      datasets: [{
+        data: [t.tL, t.tP],
+        backgroundColor: ['#2E75B6', '#E91E63'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Komposisi Jenis Kelamin', color: '#1F4E78', font: { size: 13 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = (ctx.parsed / total * 100).toFixed(2);
+              return `${ctx.label}: ${fmt(ctx.parsed)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// GRAFIK KTP-EL
+// ============================================================
+function renderKTPChart() {
+  new Chart(document.getElementById('chartKTP'), {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.nama),
+      datasets: [{
+        label: '% Cakupan KTP-el',
+        data: data.map(d => d.persenKTP),
+        backgroundColor: data.map(d =>
+          d.persenKTP >= TARGET_NASIONAL ? 'rgba(76, 175, 80, 0.8)' : 'rgba(229, 57, 53, 0.8)'
+        ),
+        borderColor: data.map(d =>
+          d.persenKTP >= TARGET_NASIONAL ? '#4CAF50' : '#E53935'
+        ),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Cakupan Perekaman KTP-el per Distrik (Target: 99,4%)',
+          color: '#1F4E78', font: { size: 13 }
+        },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.y.toFixed(2)}%` } }
+      },
+      scales: {
+        y: { beginAtZero: false, min: 95, max: 100, ticks: { callback: v => v + '%' } },
+        x: { ticks: { font: { size: 9 }, maxRotation: 60 } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// GRAFIK KOMPOSISI USIA
+// ============================================================
+function renderUsiaChart() {
+  new Chart(document.getElementById('chartUsia'), {
+    type: 'bar',
+    data: {
+      labels: dataUsia.map(d => d.kelompok),
+      datasets: [{
+        label: 'Jumlah Jiwa',
+        data: dataUsia.map(d => d.jumlah),
+        backgroundColor: 'rgba(156, 39, 176, 0.7)',
+        borderColor: '#9C27B0', borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Piramida Penduduk per Kelompok Usia', color: '#1F4E78', font: { size: 13 } }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: v => fmt(v) } },
+        y: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// INIT — JALANKAN SEMUA
+// ============================================================
+renderCards();
+renderTabel();
+renderTabelUsia();
+renderKesimpulan();
+renderBar();
+renderPie();
+renderKTPChart();
+renderUsiaChart();
+</script>
+
+</body>
+</html>
